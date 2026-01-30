@@ -1,4 +1,4 @@
-import { app, BrowserWindow } from "electron";
+import { app, BrowserWindow, ipcMain } from "electron";
 //import { createRequire } from 'node:module'
 import { fileURLToPath } from "node:url";
 import path from "node:path";
@@ -51,6 +51,15 @@ function createWindow() {
     // win.loadFile('dist/index.html')
     win.loadFile(path.join(RENDERER_DIST, "index.html"));
   }
+
+  ipcMain.on('toggle-fullscreen', () => {
+    if (win) {
+      const isFullScreen = win.isFullScreen();
+      win.setFullScreen(!isFullScreen);
+      // 切换全屏后，根据状态隐藏/显示菜单栏(部分系统兼容性)
+      win.setMenuBarVisibility(isFullScreen); 
+    }
+  });
 }
 
 // Quit when all windows are closed, except on macOS. There, it's common
