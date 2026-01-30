@@ -1,0 +1,67 @@
+:root {
+  font-family: "PingFang SC", "Microsoft YaHei", Inter, system-ui, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark; /* 强制暗色模式，抽奖系统通常暗色更好看 */
+  background-color: #111111;
+  color: #ffffff;
+
+  /* 防止抽奖时用户意外选中文字，影响视觉效果 */
+  user-select: none; 
+  -webkit-user-select: none;
+}
+
+/* 核心：确保每一层都占满屏幕 */
+html, 
+body, 
+#root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* 严禁出现全局滚动条 */
+}
+
+body {
+  /* 移除 place-items: center，改用标准的布局流 */
+  display: block; 
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 针对 Electron 的平滑滚动和字体渲染 */
+* {
+  box-sizing: border-box;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 自定义滚动条样式（如果号码极多需要局部滚动时） */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #111;
+}
+::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #444;
+}
+
+/* 移除链接和按钮的默认高亮颜色 */
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+}
