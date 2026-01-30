@@ -36,19 +36,13 @@ const Transition = forwardRef(function Transition(props: any, ref) {
   return <Zoom ref={ref} {...props} />;
 });
 
-/** --- 响应式样式逻辑：优化 14 人以上的显示 --- */
+
 const getResponsiveStyle = (count: number) => {
-  // 1人：巨型
   if (count <= 1) return { fontSize: "12rem", gridCols: "1fr", minWidth: "300px" };
-  // 2-4人：大型
   if (count <= 4) return { fontSize: "6rem", gridCols: "1fr 1fr", minWidth: "200px" };
-  // 5-12人：标准
   if (count <= 12) return { fontSize: "3.5rem", gridCols: "repeat(auto-fit, minmax(180px, 1fr))", minWidth: "150px" };
-  // 13-20人：新增档位，确保 14-15 人时不至于太小
   if (count <= 20) return { fontSize: "3.5rem", gridCols: "repeat(auto-fit, minmax(180px, 1fr))", minWidth: "120px" };
-  // 21-35人：中型
   if (count <= 35) return { fontSize: "3.5rem", gridCols: "repeat(auto-fit, minmax(180px, 1fr))", minWidth: "100px" };
-  // 35人以上：保底字号提升
   return { fontSize: "3.5rem", gridCols: "repeat(auto-fit, minmax(180px, 1fr))", minWidth: "80px" };
 };
 
@@ -95,7 +89,6 @@ export default function App() {
 
   const remainingCount = currentAvailablePool.length;
 
-  // 校验逻辑：现在不再阻塞“开ROLL”，只在人数为空或0时禁用
   const isLengthMismatch = start !== "" && end !== "" && start.length !== end.length;
   const isCountInvalid = count === "" || count === 0;
   const isOverLimit = !isCountInvalid && (count as number) > remainingCount;
@@ -109,13 +102,11 @@ export default function App() {
   const startDraw = () => {
     if (rolling || isSettingsInvalid || isCountInvalid || remainingCount === 0) return;
 
-    // 核心逻辑修改：如果设定人数超过剩余人数，则只抽取剩余的所有人
     const actualCount = Math.min(count as number, remainingCount);
 
     currentPool.current = currentAvailablePool;
     setRolling(true);
     rollingTimer.current = window.setInterval(() => {
-      // 预览时也按照实际能抽的人数展示
       const temp = Array.from({ length: actualCount }, () =>
         currentAvailablePool[Math.floor(Math.random() * currentAvailablePool.length)]
       );
@@ -155,11 +146,9 @@ export default function App() {
   };
 
   const toggleFullScreen = () => {
-    // 注意：某些模板中 ipcRenderer 挂载在 window.electron.ipcRenderer 下
     if (window.ipcRenderer) {
       window.ipcRenderer.send('toggle-fullscreen');
     } else {
-      // 网页端测试：使用标准的浏览器全屏 API
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen();
       } else {
@@ -283,3 +272,4 @@ export default function App() {
     </Stack>
   );
 }
+
