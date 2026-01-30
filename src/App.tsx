@@ -31,6 +31,7 @@ interface LotteryState {
 
 const STORAGE_KEY = "lottery-state-v3";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const Transition = forwardRef(function Transition(props: any, ref) {
   return <Zoom ref={ref} {...props} />;
 });
@@ -93,7 +94,7 @@ export default function App() {
   }, [start, end, allDrawnCodes]);
 
   const remainingCount = currentAvailablePool.length;
-  
+
   // 校验逻辑：现在不再阻塞“开ROLL”，只在人数为空或0时禁用
   const isLengthMismatch = start !== "" && end !== "" && start.length !== end.length;
   const isCountInvalid = count === "" || count === 0;
@@ -107,15 +108,15 @@ export default function App() {
 
   const startDraw = () => {
     if (rolling || isSettingsInvalid || isCountInvalid || remainingCount === 0) return;
-    
+
     // 核心逻辑修改：如果设定人数超过剩余人数，则只抽取剩余的所有人
     const actualCount = Math.min(count as number, remainingCount);
-    
+
     currentPool.current = currentAvailablePool;
     setRolling(true);
     rollingTimer.current = window.setInterval(() => {
       // 预览时也按照实际能抽的人数展示
-      const temp = Array.from({ length: actualCount }, () => 
+      const temp = Array.from({ length: actualCount }, () =>
         currentAvailablePool[Math.floor(Math.random() * currentAvailablePool.length)]
       );
       setDisplay(temp);
@@ -133,7 +134,7 @@ export default function App() {
       const j = Math.floor(Math.random() * (i + 1));
       [pool[i], pool[j]] = [pool[j], pool[i]];
     }
-    
+
     const picked = pool.slice(0, actualCount);
     const newRound: DrawRound = {
       round: history.length + 1,
@@ -153,6 +154,20 @@ export default function App() {
     setOpenResetModal(false);
   };
 
+  const toggleFullScreen = () => {
+    // 注意：某些模板中 ipcRenderer 挂载在 window.electron.ipcRenderer 下
+    if (window.ipcRenderer) {
+      window.ipcRenderer.send('toggle-fullscreen');
+    } else {
+      // 网页端测试：使用标准的浏览器全屏 API
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    }
+  };
+
   return (
     <Stack sx={{ height: "100vh", p: 4, alignItems: "center", bgcolor: "#111", overflow: "hidden" }} spacing={3}>
       <Typography variant="h3" color="white" fontWeight={900} sx={{ letterSpacing: 4 }}>
@@ -168,9 +183,9 @@ export default function App() {
         "&::-webkit-scrollbar": { width: "8px" },
         "&::-webkit-scrollbar-thumb": { backgroundColor: "#333", borderRadius: "10px" }
       }}>
-        <Box sx={{ 
-          display: "grid", gridTemplateColumns: gridCols, gap: 3, width: "100%", 
-          justifyItems: "center", alignContent: "center", 
+        <Box sx={{
+          display: "grid", gridTemplateColumns: gridCols, gap: 3, width: "100%",
+          justifyItems: "center", alignContent: "center",
         }}>
           {display.map((num, i) => (
             <Box key={i} sx={{
@@ -206,18 +221,18 @@ export default function App() {
 
       {/* 控制面板 */}
       <Stack direction="row" spacing={3} alignItems="flex-start" sx={{ bgcolor: "#2c2c2c", p: 3, borderRadius: 4, border: "1px solid #444" }}>
-        <TextField 
+        <TextField
           label="起始" size="small" value={start} error={start === "" || isLengthMismatch}
-          onChange={(e) => setStart(e.target.value.replace(/\D/g, ""))} 
-          sx={{ width: 100, "& .MuiInputBase-input": { color: "white" } }} 
+          onChange={(e) => setStart(e.target.value.replace(/\D/g, ""))}
+          sx={{ width: 100, "& .MuiInputBase-input": { color: "white" } }}
         />
-        <TextField 
+        <TextField
           label="结束" size="small" value={end} error={end === "" || isLengthMismatch}
-          onChange={(e) => setEnd(e.target.value.replace(/\D/g, ""))} 
-          sx={{ width: 100, "& .MuiInputBase-input": { color: "white" } }} 
+          onChange={(e) => setEnd(e.target.value.replace(/\D/g, ""))}
+          sx={{ width: 100, "& .MuiInputBase-input": { color: "white" } }}
         />
-        <TextField 
-          label="人数" 
+        <TextField
+          label="人数"
           size="small" value={count}
           error={isCountInvalid || isOverLimit}
           color={isOverLimit ? "warning" : "primary"}
@@ -231,17 +246,29 @@ export default function App() {
 
         <Divider orientation="vertical" flexItem sx={{ bgcolor: "#555", mx: 1 }} />
 
-        <Button 
-            variant="contained" 
-            size="large" 
-            disabled={rolling || isSettingsInvalid || isCountInvalid || remainingCount === 0} 
-            onClick={startDraw} 
-            sx={{ height: 40, fontWeight: "bold", bgcolor: isOverLimit ? "#ffa726" : "#ffeb3b", color: "#000", "&:hover": { bgcolor: "#fdd835" } }}
+        <Button
+          variant="contained"
+          size="large"
+          disabled={rolling || isSettingsInvalid || isCountInvalid || remainingCount === 0}
+          onClick={startDraw}
+          sx={{ height: 40, fontWeight: "bold", bgcolor: isOverLimit ? "#ffa726" : "#ffeb3b", color: "#000", "&:hover": { bgcolor: "#fdd835" } }}
         >
-            {isOverLimit ? "开ROLL"+`(剩余${remainingCount})` : "开ROLL"}
+          {isOverLimit ? "开ROLL" + `(剩余${remainingCount})` : "开ROLL"}
         </Button>
         <Button variant="contained" color="warning" size="large" disabled={!rolling} onClick={stopDraw} sx={{ height: 40, fontWeight: "bold" }}>停止</Button>
         <Button color="error" variant="contained" disabled={rolling} onClick={() => setOpenResetModal(true)} sx={{ height: 40 }}>重置</Button>
+        <Button
+            variant="outlined"
+            onClick={toggleFullScreen}
+            sx={{
+              height: 40,
+              color: "#fff",
+              borderColor: "#555",
+              "&:hover": { borderColor: "#ffeb3b", color: "#ffeb3b" }
+            }}
+          >
+            全屏
+          </Button>
       </Stack>
 
       <Dialog open={openResetModal} TransitionComponent={Transition} onClose={() => setOpenResetModal(false)} PaperProps={{ sx: { bgcolor: "#1a1a1a", border: "1px solid #ff1744", borderRadius: 4 } }}>
@@ -250,6 +277,7 @@ export default function App() {
         <DialogActions sx={{ p: 2, justifyContent: "center" }}>
           <Button onClick={() => setOpenResetModal(false)} sx={{ color: "gray" }}>取消</Button>
           <Button onClick={handleResetConfirm} variant="contained" color="error">确定重置</Button>
+          
         </DialogActions>
       </Dialog>
     </Stack>
