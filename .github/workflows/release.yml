@@ -1,0 +1,52 @@
+name: Build and Release Electron
+
+on:
+  push:
+    tags:
+      - 'v*' # 当你推送以 v 开头的标签（如 v1.0.0）时触发编译
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    strategy:
+      # 矩阵配置：同时开启两台虚拟机
+      matrix:
+        os: [windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm install
+
+      # 如果有原生模块需要编译，可能需要这一步
+      # - name: Rebuild Native Modules
+      #   run: npm rebuild
+
+      - name: Build Vite + Electron
+        run: npm run build
+        env:
+          # GitHub 提供的临时 Token，用于上传 Release 产物
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 这一步会将编译好的 dist 目录下的安装包上传到 GitHub Release
+      - name: Release Packages
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            dist/*.exe
+            dist/*.dmg
+            dist/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
