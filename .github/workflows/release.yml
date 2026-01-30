@@ -54,8 +54,8 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            dist/*.exe
-            dist/*.dmg
-            dist/*.zip
+            release/*/*.exe
+            release/*/*.dmg
+            release/*/*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
